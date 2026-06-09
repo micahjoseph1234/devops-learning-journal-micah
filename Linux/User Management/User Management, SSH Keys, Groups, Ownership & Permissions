@@ -1,0 +1,545 @@
+# Day 6 - User Management, SSH Keys, Groups, Ownership & Permissions
+
+## Overview
+
+This lab focused on Linux User Management, SSH Key Authentication, Group Management, Ownership, and File Permissions from a DevOps perspective.
+
+---
+
+# Task 1 - Become Root User
+
+## Commands
+
+```bash
+sudo -i
+whoami
+```
+
+## Output
+
+```text
+root
+```
+
+## Learning
+
+* `sudo -i` elevates access to the root user.
+* Root has full administrative privileges on Linux.
+
+---
+
+# Task 2 - Create Linux User
+
+## Assignment
+
+Create a Linux user:
+
+```text
+Username: micah
+Shell: /bin/bash
+Home Directory: /home/micah
+```
+
+## Command Used
+
+```bash
+useradd micah -s /bin/bash -m -k /home/devopsadmin
+```
+
+## Correct Command
+
+```bash
+useradd micah -s /bin/bash -m -d /home/micah
+```
+
+## Learning
+
+* `-s` → Specify login shell
+* `-m` → Create home directory
+* `-d` → Specify home directory location
+
+---
+
+# Task 3 - Verify User Creation
+
+## Command
+
+```bash
+cat /etc/passwd
+```
+
+## Relevant Output
+
+```text
+micah:x:1003:1003::/home/micah:/bin/bash
+```
+
+## Learning
+
+* `/etc/passwd` stores Linux user information.
+* Each line represents one Linux user.
+
+---
+
+# Task 4 - Switch User
+
+## Commands
+
+```bash
+su - micah
+pwd
+```
+
+## Output
+
+```text
+/home/micah
+```
+
+## Learning
+
+* `su - user` switches to the user's login environment.
+* Home directory is loaded automatically.
+
+---
+
+# Task 5 - Set Password
+
+## Command
+
+```bash
+passwd micah
+```
+
+## Output
+
+```text
+Sorry, passwords do not match.
+passwd: password unchanged
+```
+
+## Learning
+
+* Password must be entered identically twice.
+* Password assignment is usually performed by root.
+
+---
+
+# Task 6 - Generate SSH Keys
+
+## Command
+
+```bash
+ssh-keygen -t ecdsa -b 521
+```
+
+## Initial Mistake
+
+Entered:
+
+```text
+.ssh
+```
+
+when prompted for key file location.
+
+This created:
+
+```text
+.ssh
+.ssh.pub
+```
+
+as files instead of creating the `.ssh` directory.
+
+## Correct Action
+
+Press ENTER when prompted:
+
+```text
+Enter file in which to save the key:
+```
+
+## Result
+
+```text
+/home/micah/.ssh/id_ecdsa
+/home/micah/.ssh/id_ecdsa.pub
+```
+
+## Learning
+
+* `-t` → Key Type
+* `-b` → Key Size
+* `id_ecdsa` → Private Key
+* `id_ecdsa.pub` → Public Key
+
+---
+
+# Task 7 - Verify SSH Directory
+
+## Commands
+
+```bash
+cd ~/.ssh
+pwd
+ls
+```
+
+## Output
+
+```text
+/home/micah/.ssh
+
+id_ecdsa
+id_ecdsa.pub
+```
+
+## Learning
+
+SSH keys are stored inside:
+
+```text
+~/.ssh
+```
+
+---
+
+# Task 8 - Create authorized_keys
+
+## Command
+
+```bash
+cat id_ecdsa.pub > authorized_keys
+```
+
+## Output
+
+```text
+authorized_keys
+id_ecdsa
+id_ecdsa.pub
+```
+
+## Learning
+
+* `authorized_keys` contains trusted public keys.
+* SSH compares the connecting private key against the stored public key.
+
+---
+
+# Task 9 - Secure SSH Files
+
+## Incorrect Attempt
+
+```bash
+chmod 600 /home/micah/*
+```
+
+## Error
+
+```text
+No such file or directory
+```
+
+## Correct Command
+
+```bash
+chmod 600 /home/micah/.ssh/*
+```
+
+## Learning
+
+Permission:
+
+```text
+600
+```
+
+means:
+
+```text
+Owner  -> Read + Write
+Group  -> No Access
+Others -> No Access
+```
+
+---
+
+# Task 10 - View Linux Groups
+
+## Command
+
+```bash
+cat /etc/group
+```
+
+## Learning
+
+* `/etc/group` stores all Linux groups.
+* Groups are used to provide access to multiple users.
+
+---
+
+# Task 11 - Docker Group Authorization
+
+## Before Group Assignment
+
+### Command
+
+```bash
+docker ps
+```
+
+### Output
+
+```text
+permission denied while trying to connect to the docker API
+```
+
+## Cause
+
+User `micah` was not a member of the Docker group.
+
+---
+
+## Fix
+
+### Command
+
+```bash
+usermod -aG docker micah
+```
+
+### Verification
+
+```bash
+su - micah
+docker ps
+```
+
+### Output
+
+```text
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+```
+
+## Learning
+
+### Authentication
+
+```text
+Who are you?
+```
+
+### Authorization
+
+```text
+What can you do?
+```
+
+---
+
+# Task 12 - Create Application Directory
+
+## Command
+
+```bash
+mkdir /opt/webapp
+```
+
+## Output
+
+```text
+File exists
+```
+
+## Learning
+
+Directory had already been created.
+
+---
+
+# Task 13 - Change Ownership
+
+## Command
+
+```bash
+chown -R micah /opt/webapp
+```
+
+## Learning
+
+`chown` changes ownership.
+
+It does not modify permissions.
+
+---
+
+# Task 14 - Change Owner and Group
+
+## Command
+
+```bash
+chown micah:docker /opt/webapp
+```
+
+## Result
+
+```text
+Owner = micah
+Group = docker
+```
+
+## Learning
+
+```text
+user:group
+```
+
+format is used with `chown`.
+
+---
+
+# Task 15 - Verify Ownership
+
+## Command
+
+```bash
+ls -ld /opt/webapp
+```
+
+## Output
+
+```text
+drwxrwx--- 2 micah docker ...
+```
+
+## Meaning
+
+```text
+Owner = micah
+Group = docker
+Permissions = 770
+```
+
+---
+
+# Task 16 - Change Permissions
+
+## Command
+
+```bash
+chmod 770 /opt/webapp
+```
+
+## Permission Breakdown
+
+```text
+Owner  -> rwx
+Group  -> rwx
+Others -> ---
+```
+
+## Learning
+
+`chmod` changes permissions.
+
+`chown` changes ownership.
+
+---
+
+# Task 17 - Create Deployment File
+
+## Commands
+
+```bash
+echo "Deployment Started" > deploy.sh
+cat deploy.sh
+```
+
+## Output
+
+```text
+Deployment Started
+```
+
+## Learning
+
+* `>` creates or overwrites file content.
+* `cat` displays file content.
+
+---
+
+# Task 18 - Rename File
+
+## Command
+
+```bash
+mv deploy.sh deployment.sh
+```
+
+## Learning
+
+`mv` can be used to rename files and directories.
+
+---
+
+# Task 19 - Delete File
+
+## Command
+
+```bash
+rm deployment.sh
+```
+
+## Learning
+
+`rm` removes files.
+
+---
+
+# Final Verification
+
+## Ownership
+
+```bash
+chown micah:docker /opt/webapp
+```
+
+## Permissions
+
+```bash
+chmod 770 /opt/webapp
+```
+
+## Verification Output
+
+```text
+drwxrwx--- 2 micah docker 4096 Jun 9 20:49 webapp
+```
+
+## Interpretation
+
+```text
+Owner  = micah
+Group  = docker
+
+Owner Permissions = rwx
+Group Permissions = rwx
+Others Permissions = ---
+```
+
+---
+
+# Key Takeaways
+
+* Linux users are managed through `useradd`, `su`, and `passwd`.
+* SSH authentication relies on private/public key pairs.
+* Public keys are stored in `authorized_keys`.
+* Groups simplify access management.
+* `chown` changes ownership.
+* `chmod` changes permissions.
+* Docker access is controlled through the Docker group.
+* Authentication identifies a user.
+* Authorization determines what that user can access.
